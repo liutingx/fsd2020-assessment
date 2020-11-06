@@ -1,0 +1,9 @@
+<h1>My Bookstore</h1>
+{{#each search}}
+    <!--form method="GET" action="/search">
+                <input type="hidden" name="q" value="{{ q }}">
+                <input type="hidden" name="offset" value={{ prevOffset }}>
+                <button type="submit" name="search" value={{this}}>{{this}}</button>
+    </form-->
+    <input type="button" name="search" value="{{this}}">
+{{/each}}
