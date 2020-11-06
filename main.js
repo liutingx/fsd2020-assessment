@@ -17,9 +17,9 @@ const API_KEY = process.env.API_KEY || ''
 const BASE_URL = 'https://api.nytimes.com/svc/books/v3/reviews.json'
 
 // SQL 
-const SQL_FIND_BY_FIRSTCHAR = 'select title from book2018 where title like ? order by title asc limit ? offset ?'
+const SQL_FIND_BY_FIRSTCHAR = 'select title, book_id from book2018 where title like ? order by title asc limit ? offset ?'
 const SQL_COUNT = 'select count(*) as q_count from book2018 where title like ?'
-const SQL_FIND_BY_TITLE = 'select * from book2018 where title=?'
+const SQL_FIND_BY_TITLE = 'select * from book2018 where book_id=?'
 
 // create the database connection pool
 const pool = mysql.createPool({
@@ -59,7 +59,6 @@ const mkQuery = (sqlStmt, pool) => {
         const conn = await pool.getConnection()
         try {
             const results = await conn.query(sqlStmt, params)
-            console.info('results from mkquery', results[0])
             return results[0]
             }
         catch(e) {
@@ -85,7 +84,7 @@ app.engine('hbs', handlebars({ defaultLayout: 'default.hbs' }))
 app.set('view engine', 'hbs')
 
 //morgan logging
-//app.use(morgan('combined'));
+app.use(morgan('combined'));
 
 
 // configure the application
@@ -112,12 +111,12 @@ app.get('/search', async(req, resp) => {
         const currentPage = offset/limit || 0
         const pages = Math.floor(queryCount/limit)
         const recs = await getBooksList([`${search}%`, limit, offset])
-        
+
         if (recs.length <= 0) {
             //404!
             resp.status(404)
             resp.type('text/html')
-            resp.send(`Not found: ${search}`)
+            resp.send(`<h1>There are no results for <i>${search}</i>!</h1>`)
             return
         }
 
@@ -140,28 +139,88 @@ app.get('/search', async(req, resp) => {
         resp.send(JSON.stringify(e))
     }
 })
-app.get('/search/:search', async(req, resp) => { 
+app.get('/search/:bookId', async(req, resp) => { 
     try {
-        const search = req.params['search']
+        const search = req.params['bookId']
         console.info('search', search)
         const recs = await getBook([`${search}`])
         const authors = recs[0].authors.split('|')
+        const genres = recs[0].genres.split('|')
         
         if (recs.length <= 0) {
             //404!
             resp.status(404)
             resp.type('text/html')
-            resp.send(`Not found: ${search}`)
+            resp.send(`<h1>There are no results for ${search}!</h1>`)
             return
         }
-        
-        console.info('recs',recs)
-        console.info('authors', authors)
+
+        resp.status(200)
+        resp.format(
+            {
+            'text/html': () => {
+                resp.render('bookDetail', {
+                    book: recs[0],
+                    authors,
+                    genres
+                })
+            },
+            'application/json': () => { 
+                resp.json({
+                    bookId: recs[0].book_id,
+                    title: recs[0].title,
+                    authors: authors,
+                    summary: recs[0].description,
+                    pages: recs[0].pages,
+                    rating: recs[0].rating,
+                    ratingCount: recs[0].rating_count,
+                    genre: genres
+                })
+            },
+            'default': () => {
+                resp.status(406).type('text/plain')
+                resp.send(`Not supported: ${req.get("Accept")}`)
+            }
+        })
+    }
+    catch(e) {
+        resp.status(500)
+        resp.type('text/html')
+        resp.send(JSON.stringify(e))
+    }
+})
+
+app.get('/reviews', async(req, resp) => { 
+    try {
+        const bookTitle = req.query['bookTitle']
+        //one of the author
+        const author = req.query['author'].split(',').join(' and ')
+
+        const url = withQuery(BASE_URL, {
+            'api-key': API_KEY,
+            title: bookTitle,
+            author
+        })
+        console.info('url', url)
+        const recs = await fetch(url)
+        let data = await recs.json()
+
+        if (recs.length <= 0) {
+            resp.status(404)
+            resp.type('text/html')
+            resp.send(`Not found: ${bookTitle}`)
+            return
+        }
+        const reviews = data.results
+        .map(d => {
+            return {title: d.book_title, author: d.book_author, reviewer: d.byline, date: d.publication_dt, summary: d.summary,
+                    reviewUrl: d.url}
+        })
         resp.status(200)
         resp.type('text/html')
-        resp.render('bookDetail', {
-            book: recs[0],
-            authors
+        resp.render('bookReview',
+        {
+            reviews
         })
     }
     catch(e) {

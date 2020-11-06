@@ -1,23 +1,25 @@
-<h1>display</h1>
+<form method="GET" action="/" class="mt-4">
+    <button class="btn btn-primary mb-4" type="submit">Home</button>
+</form>
 <table class="table mt-4">
     {{#each titles}}
         <tr>
             <td>
-                <a href="/search/{{this.title}}">{{this.title}}</a>
+                <a href="/search/{{this.book_id}}">{{this.title}}</a>
             </td>
         </tr>
     {{/each}}
 </table>
 <div class="row d-flex justify-content-between">
     {{#if onePage}}
-        <h3>There are no more results!</h3>
+        <h3><i>There are no more results!</i></h3>
     {{else if noNextPage}}
         <form method="GET" action="/search">
             <input type="hidden" name="search" value="{{ search }}">
             <input type="hidden" name="offset" value={{ prevOffset }}>
             <button type="submit">Previous</button>
         </form>
-        <h3>There are no more results!</h3>
+        <h3><i>There are no more results!</i></h3>
     {{else if noPrevPage}}
         <form method="GET" action="/search">
             <input type="hidden" name="search" value="{{ search }}">
@@ -37,4 +39,4 @@
         </form>
     {{/if}}
     <input type="hidden" name="page" value="{{ page }}">
-</div> 
+</div>

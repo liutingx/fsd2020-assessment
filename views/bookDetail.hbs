@@ -1,14 +1,21 @@
 <div class="row mt-4">
-    <div class="col-4">
+    <div class="col">
         <img src="{{book.image_url}}" class="mb-2" alt="">
         <p>Pages: {{book.pages}}</p>
         <p>Rating: {{book.rating}}({{book.rating_count}})</p>
-        <p>Genres: {{book.genres}}</p>
+        <p>Genres: {{genres}}</p>
     </div>
-    <div class="col-8">
+    <div class="col">
         <h1>{{book.title}}</h1>
         <h3>{{authors}}</h3>
         <p>{{book.description}}</p>
-        <a href="" class="mt-4">Find Review</a>
+        <form method="GET" action="/reviews" class="mt-4">
+            <input type="hidden" name="bookTitle" value="{{book.title}}">
+            <input type="hidden" name="author" value="{{authors}}">
+            <button class="btn btn-warning mb-4" type="submit">Find Review</button>
+        </form>
     </div>
 </div>
+<form method="GET" action="/" class="mt-4">
+    <button class="btn btn-primary mb-4" type="submit">Home</button>
+</form>

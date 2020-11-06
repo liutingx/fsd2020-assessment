@@ -1,0 +1,18 @@
+{{#if reviews}}
+    <div class="mt-4">
+        {{#each reviews}}
+            <h1>{{this.title}}</h1>
+            <h3>by {{this.author}}</h3>
+            <h3>Reviewer: {{this.reviewer}}</h3>
+            <h3>Date: {{this.date}}</h3>
+            <p>{{this.summary}}</p>
+            <div class="float-right" ><a href="{{this.reviewUrl}}" target="_blank">Full Review</a></div><br>
+        {{/each}}
+        <footer>Copyright (c) 2020 The New York Times Company. All Rights Reserved.</footer>
+    </div>
+{{else}}
+    <h2 style="text-align: center;"><i>There are no reviews for this book!</i></h2>
+{{/if}}
+<form method="GET" action="/" class="mt-4">
+    <button class="btn btn-primary mb-4" type="submit">Home</button>
+</form>
